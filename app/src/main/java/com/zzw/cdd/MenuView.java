@@ -88,16 +88,6 @@ public class MenuView extends SurfaceView implements SurfaceHolder.Callback, Vie
 
     }
 
-
-
-
-
-
-
-
-
-
-
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         threadFlag = true;
@@ -142,8 +132,8 @@ public class MenuView extends SurfaceView implements SurfaceHolder.Callback, Vie
         System.out.println(selectIndex);
         switch (selectIndex) {
             case 0 :
-//                MainActivity.handler.sendEmptyMessage(MainActivity.GAME);
-//                break;
+                MainActivity.handler.sendEmptyMessage(MainActivity.GAME);
+                break;
             case 1 :
                 break;
             case 2 :

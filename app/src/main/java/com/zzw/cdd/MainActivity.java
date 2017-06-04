@@ -12,12 +12,15 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
+    public final static int GAME = 1;
     public final static int EXIT = 2;
+
     public static int SCREEN_WIDTH;
     public static int SCREEN_HEIGHT;
     public static double SCALE_VERTICAL;
     public static double SCALE_HORIAONTAL;
     private MenuView mv;
+    private GameView gv;
     public static Handler handler;
 
     @Override
@@ -44,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
 
         //获取游戏开始菜单
         mv = new MenuView(this);
+        //获取游戏界面
+        gv = new GameView(this.getApplicationContext());
         setContentView(mv);
 
         handler = new Handler() {
@@ -57,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 //                        setContentView(mv);
                         break;
                     case 1 :
-//                        setContentView(gv);
+                        setContentView(gv);
                         break;
                     case 2 :
                         finish();

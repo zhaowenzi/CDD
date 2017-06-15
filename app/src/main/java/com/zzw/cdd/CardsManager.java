@@ -1,6 +1,8 @@
 package com.zzw.cdd;
 
+import java.security.SignatureException;
 import java.util.Random;
+import java.util.Vector;
 
 /**
  * Created by 子文 on 2017/5/24.
@@ -48,6 +50,7 @@ public class CardsManager {
     public static int getImageRow(int poke) {
         return poke / 4;
     }
+    //返回的int分别对应的花色为黑桃、红心、梅花、方片
     public static int getImageCol(int poke) {
         return poke % 4;
     }
@@ -74,7 +77,18 @@ public class CardsManager {
     //判断是否为顺
     public static boolean isShun(int[] cards) {
         int start = getCardNumber(cards[0]);
-        if(cards[0] == 5 && cards[1] == 4 && cards[2] == 3 && cards[3] == 15 && cards[4] == 14)
+        if(getCardNumber(cards[0]) == 15
+                && getCardNumber(cards[1]) == 14
+                && getCardNumber(cards[2]) == 5
+                && getCardNumber(cards[3]) == 4
+                && getCardNumber(cards[4]) == 3)
+            return true;
+
+        if(getCardNumber(cards[0]) == 15
+                && getCardNumber(cards[1]) == 6
+                && getCardNumber(cards[2]) == 5
+                && getCardNumber(cards[3]) == 4
+                && getCardNumber(cards[4]) == 3)
             return true;
         //单顺最大一张不能大于A
         if(start > 14) {
@@ -153,8 +167,6 @@ public class CardsManager {
                 return CardsType.tonghuashun;
             if (isZaShun(cards))
                 return CardsType.zashun;
-            if (isShun(cards))
-                return CardsType.shun;
             if(getCardNumber(cards[0]) == getCardNumber(cards[2])
                     && getCardNumber(cards[3]) == getCardNumber(cards[4])) {
                 return CardsType.sangedaiyidui;
@@ -170,5 +182,240 @@ public class CardsManager {
                 return CardsType.sigedaidanzhang;
         }
         return CardsType.error;
+    }
+
+    //返回的Int值包含花色和数值，后面处理一定要加上getCardNumber()和getImageCol()
+    public static int getValue(int[] cards) {
+        //TODO Auto-generated method stub
+        int type;
+        type = getType(cards);
+        if(type == CardsType.danzhang)
+            return cards[0];
+        if(type == CardsType.yidui)
+            return cards[1];
+        if(type == CardsType.sange)
+            return cards[2];
+        //2在顺子中最为小牌；A和2在一起做顺时，做小牌处理，其余做打牌处理
+        if(type == CardsType.zashun || type == CardsType.tonghuashun){
+            if(getCardNumber(cards[0]) == 15){
+                if(getCardNumber(cards[1]) == 14){
+                    return cards[2];
+                }
+                else{
+                    return cards[1];
+                }
+            }else {
+                return cards[0];
+            }
+        }
+        if(type == CardsType.tonghuawu)
+            return cards[0];
+        if(type == CardsType.sangedaiyidui){
+            if(getCardNumber(cards[0]) == getCardNumber(cards[2])) {
+                return cards[2];
+            }else {
+                return cards[4];
+            }
+        }
+        if(type == CardsType.sigedaidanzhang) {
+            if(getCardNumber(cards[0]) == getCardNumber(cards[3])) {
+                return cards[3];
+            }
+            else{
+                return cards[4];
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * 是不是一个有效的牌型
+     *
+     * @param cards
+     * @return
+     */
+    public static boolean isCard(int[] cards) {
+        if(getType(cards) == CardsType.error)
+            return false;
+        return true;
+    }
+
+    /**
+     * 返回true 前者牌大
+     *
+     * @param f
+     * @param s
+     * @return
+     */
+    public static int compare(CardsHolder f, CardsHolder s) {
+        if(f.cards.length != s.cards.length)
+            return -1;
+        if(getCardNumber(f.value) > getCardNumber(s.value)) {
+            return 1;
+        }
+        if(getCardNumber(f.value) == getCardNumber(s.value)) {
+            if(getImageCol(f.value) < getImageCol(s.value)){
+                return 1;
+            }
+            if(getImageCol(f.value) > getImageCol(s.value)){
+                return 0;
+            }
+        }
+        if(getCardNumber(f.value) < getCardNumber(s.value)) {
+            return 0;
+        }
+        return -1;
+    }
+    public static int[] outCardByItself(int cards[], Player last, Player next) {
+        CardsAnalyzer analyzer = CardsAnalyzer.getInstance();
+        analyzer.setPokes(cards);
+        Vector<int[]> card_danzhang = analyzer.getCard_danzhang();
+        if(card_danzhang.size() > 0) {
+            return card_danzhang.elementAt(0);
+        }
+        return new int[]{cards[0]};
+    }
+
+    //出牌智能
+    public static int[] findTheRightCard(CardsHolder card, int cards[], Player last, Player next) {
+        CardsAnalyzer cardsAnalyzer = CardsAnalyzer.getInstance();
+        cardsAnalyzer.setPokes(cards);
+        return findBigerCards(card, cards);
+    }
+
+
+    public static int[] findBigerCards(CardsHolder card, int cards[]) {
+        try{
+            //获取card的信息，牌值，牌型
+            int[] cardPokes = card.cards;
+            //此处牌的value包含了值和花色两个值
+            int cardValue = card.value;
+            int cardType = card.cardsType;
+            int cardLength = cardPokes.length;
+            //使用AnalyzerPoke来对牌进行分析
+            CardsAnalyzer analyzer = CardsAnalyzer.getInstance();
+            analyzer.setPokes(cards);
+
+            Vector<int[]> temp;
+            int size = 0;
+            //根据适当牌型选取适当牌
+            switch (cardType) {
+                case CardsType.danzhang:
+                    temp = analyzer.getCard_danzhang();
+                    size = temp.size();
+                    for(int i = 0; i < size; i++) {
+                        int[] cardArray = temp.get(i);
+                        int v = CardsManager.getCardNumber(cardArray[0]);
+                        int h = CardsManager.getImageCol(cardArray[0]);
+                        if(v > getCardNumber(cardValue)){
+                            return cardArray;
+                        }
+                        if(v == getCardNumber(cardValue) && h < getImageCol(cardValue)){
+                            return cardArray;
+                        }
+                    }
+                    break;
+                case CardsType.yidui:
+                    temp = analyzer.getCard_yidui();
+                    size = temp.size();
+                    for(int i = 0; i < size; i++){
+                        int[] cardArray = temp.get(i);
+                        int v = CardsManager.getCardNumber(cardArray[1]);
+                        int h = CardsManager.getImageCol(cardArray[1]);
+                        if(v > getCardNumber(cardValue)) {
+                            return cardArray;
+                        }
+                        if(v == getCardNumber(cardValue) && h < getImageCol(cardValue)){
+                            return cardArray;
+                        }
+                    }
+                    break;
+                case CardsType.sange:
+                    temp = analyzer.getCard_sange();
+                    size = temp.size();
+                    for(int i = 0; i < size; i++){
+                        int[] cardArray = temp.get(i);
+                        int v = CardsManager.getCardNumber(cardArray[0]);
+                        int h = CardsManager.getImageCol(cardArray[2]);
+                        if(v > getCardNumber(cardValue)) {
+                            return cardArray;
+                        }
+                        if(v == getCardNumber(cardValue) && h < getImageCol(cardValue)) {
+                            return cardArray;
+                        }
+                    }
+                    break;
+                case CardsType.zashun:
+                case CardsType.tonghuashun:
+                case CardsType.tonghuawu:
+                    temp = analyzer.getCard_zashun();
+                    size = temp.size();
+                    for(int i = 0; i < size; i++){
+                        int[] cardArray = temp.get(i);
+                        int v = CardsManager.getCardNumber(CardsManager.getValue(cardArray));
+                        int h = CardsManager.getImageCol(CardsManager.getValue(cardArray));
+                        if(v > getCardNumber(cardValue)) {
+                            return cardArray;
+                        }
+                        if(v == getCardNumber(cardValue) && h < getImageCol(cardValue)) {
+                            return cardArray;
+                        }
+                    }
+                    break;
+                case CardsType.sigedaidanzhang:
+                    if(cards.length < 5) {
+                        break;
+                    }
+                    temp = analyzer.getCard_sige();
+                    size = temp.size();
+                    for(int i = 0; i < size; i++) {
+                        int[] cardArray = temp.get(i);
+                        int v = CardsManager.getCardNumber(cardArray[3]);
+                        int h = CardsManager.getImageCol(cardArray[3]);
+                        if(v > getCardNumber(cardValue)){
+                            int[] sidaiyi = new int[5];
+                            for(int j = 0; j < cardArray.length; j++){
+                                sidaiyi[j] = cardArray[j];
+                            }
+                            temp = analyzer.getCard_danzhang();
+                            size = temp.size();
+                            if(size > 0){
+                                int[] t = temp.get(0);
+                                sidaiyi[4] = t[0];
+                                return sidaiyi;
+                            }
+                        }
+                        if(v == getCardNumber(cardValue) && h < getImageCol(cardValue)){
+                            int[] sidaiyi = new int[5];
+                            for(int j = 0; j < cardArray.length; j++){
+                                sidaiyi[j] = cardArray[j];
+                            }
+                            temp = analyzer.getCard_danzhang();
+                            size = temp.size();
+                            if(size > 0){
+                                int[] t = temp.get(0);
+                                sidaiyi[4] = t[0];
+                                return sidaiyi;
+                            }
+                        }
+                    }
+                    break;
+                case CardsType.sangedaiyidui:
+                    if(cards.length < 5) {
+                        break;
+                    }
+                    temp = analyzer.getCard_sange();
+                    size = temp.size();
+                    for(int i = 0; i < size; i++) {
+                        int[] cardArray = temp.get(i);
+                        int v = CardsManager.getCardNumber(cardArray[2]);
+                        int h = CardsManager.getImageCol(cardArray[2]);
+
+                    }
+
+
+            }
+
+        }
     }
 }

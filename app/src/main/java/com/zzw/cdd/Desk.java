@@ -190,7 +190,7 @@ public class Desk {
         players[2] = new Player(playerCards[2], playerCardsPosition[2][0],
                 playerCardsPosition[2][1], CardsType.direction_Vertical, 2, this, context);
         players[3] = new Player(playerCards[3], playerCardsPosition[3][0],
-                playerCardsPosition[3][1], CardsType.direction_Vertical, 3, this, context);
+                playerCardsPosition[3][1], CardsType.direction_Horizontal, 3, this, context);
         players[0].setLastAndNext(players[1], players[3]);
         players[1].setLastAndNext(players[2], players[0]);
         players[2].setLastAndNext(players[3], players[1]);

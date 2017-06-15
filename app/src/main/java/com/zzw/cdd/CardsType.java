@@ -17,4 +17,6 @@ public interface CardsType {
     int sigedaidanzhang = 9;
     int error = 10;
 
+    int direction_Horizontal = 0;
+    int direction_Vertical = 1;
 }

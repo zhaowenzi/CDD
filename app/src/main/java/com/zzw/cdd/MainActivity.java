@@ -14,6 +14,9 @@ public class MainActivity extends AppCompatActivity {
 
     public final static int GAME = 1;
     public final static int EXIT = 2;
+    public final static int SMALL_CARD = 3;
+    public final static int WRONG_CARD = 4;
+    public final static int EMPTY_CARD = 5;
 
     public static int SCREEN_WIDTH;
     public static int SCREEN_HEIGHT;
